@@ -73,6 +73,8 @@ the `client_api` role). Base URL local: `http://localhost:35100/api/v1/client`.
 ## Git
 
 - **Never commit without explicit instruction.** Ask first.
+- **Stay on the `main` branch** unless there are special circumstances — commit
+  directly to `main`; do not create feature branches by default.
 - Ticket prefix: `AV-xxx`.
 
 ## Checklist when adding/changing a section

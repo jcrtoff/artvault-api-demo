@@ -19,6 +19,14 @@ export default async function HomePage() {
 
   return (
     <>
+      <div style={{ marginBottom: 16 }}>
+        <Link
+          href="/artists"
+          style={{ fontSize: 13, color: "#9a9aa0", textDecoration: "none" }}
+        >
+          Artists →
+        </Link>
+      </div>
       <h1 style={{ fontSize: 22, marginBottom: 16 }}>Your collections</h1>
       <ul style={{ listStyle: "none", padding: 0, display: "grid", gap: 12 }}>
         {collections.map((c) => (

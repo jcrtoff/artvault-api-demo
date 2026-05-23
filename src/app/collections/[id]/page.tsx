@@ -2,9 +2,11 @@ import Link from "next/link";
 import {
   listArtworks,
   listCollections,
+  listCollectionArtists,
   ArtVaultApiError,
   type ArtworkSummary,
   type Collection,
+  type CollectionArtist,
 } from "@/lib/artvault";
 
 // Artworks carry 7-day presigned image URLs and change behind our back.
@@ -28,13 +30,16 @@ export default async function CollectionPage({
   // collection's display metadata from the list endpoint by id.
   let collection: Collection | undefined;
   let page;
+  let artists: CollectionArtist[] = [];
   try {
-    const [collections, artworks] = await Promise.all([
+    const [collections, artworks, artistPage] = await Promise.all([
       listCollections(),
       listArtworks(id, { limit: PAGE_SIZE, offset }),
+      listCollectionArtists(id, { limit: PAGE_SIZE }),
     ]);
     collection = collections.find((c) => c.id === id);
     page = artworks;
+    artists = artistPage.items;
   } catch (err) {
     return <ErrorPanel err={err} />;
   }
@@ -60,6 +65,8 @@ export default async function CollectionPage({
         {page.total} artworks
       </div>
 
+      {artists.length > 0 ? <ArtistsStrip artists={artists} /> : null}
+
       {page.items.length === 0 ? (
         <p>No artworks in this collection.</p>
       ) : (
@@ -80,6 +87,72 @@ export default async function CollectionPage({
 
       <Pager total={page.total} offset={page.offset} collectionId={id} />
     </>
+  );
+}
+
+function ArtistsStrip({ artists }: { artists: CollectionArtist[] }) {
+  return (
+    <section style={{ marginBottom: 24 }}>
+      <h2 style={{ fontSize: 14, color: "#9a9aa0", marginBottom: 10 }}>
+        Artists in this collection
+      </h2>
+      <ul
+        style={{
+          listStyle: "none",
+          padding: 0,
+          margin: 0,
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 10,
+        }}
+      >
+        {artists.map((artist) => (
+          <li key={artist.id}>
+            <Link
+              href={`/artists/${artist.id}`}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                border: "1px solid #2a2a2e",
+                borderRadius: 999,
+                padding: "4px 12px 4px 4px",
+                color: "#e8e8ea",
+                textDecoration: "none",
+              }}
+            >
+              <span
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: "50%",
+                  overflow: "hidden",
+                  background: "#1a1a1e",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                {artist.primary_thumbnail_url ? (
+                  // Plain <img> on purpose for presigned S3 URLs (see next.config.ts).
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={artist.primary_thumbnail_url}
+                    alt={artist.name}
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  />
+                ) : null}
+              </span>
+              <span style={{ fontSize: 13 }}>{artist.name}</span>
+              <span style={{ fontSize: 12, color: "#9a9aa0" }}>
+                {artist.artwork_count}
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

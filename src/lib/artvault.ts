@@ -62,6 +62,61 @@ export interface ArtworkDetail extends ArtworkSummary {
   documents?: ArtworkDocument[];
 }
 
+/** A collection reference embedded in an Artist (GET /artists). */
+export interface ArtistCollectionRef {
+  id: string;
+  name: string;
+  artwork_count: number;
+}
+
+/** GET /artists item. `id` is a stable, backend-assigned hash of the
+ *  normalized name. */
+export interface Artist {
+  id: string;
+  name: string;
+  artwork_count: number;
+  primary_image_url: string | null;
+  primary_thumbnail_url: string | null;
+  collections: ArtistCollectionRef[];
+}
+
+export interface ArtistPage {
+  items: Artist[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+/** GET /collections/{id}/artists item (no embedded collections; same artist
+ *  ids as GET /artists). */
+export interface CollectionArtist {
+  id: string;
+  name: string;
+  artwork_count: number;
+  primary_thumbnail_url: string | null;
+}
+
+export interface CollectionArtistPage {
+  items: CollectionArtist[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+/** GET /artists/{id}/artworks item: an ArtworkSummary plus the collection it
+ *  belongs to, for cross-collection provenance. */
+export interface ArtistArtwork extends ArtworkSummary {
+  collection_id: string;
+  collection_name: string;
+}
+
+export interface ArtistArtworkPage {
+  items: ArtistArtwork[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 export interface FieldDefinition {
   [k: string]: unknown;
 }
@@ -150,4 +205,40 @@ export function getArtwork(
 /** GET /collections/{id}/field-groups */
 export function listFieldGroups(collectionId: string): Promise<FieldGroup[]> {
   return get<FieldGroup[]>(`/collections/${collectionId}/field-groups`);
+}
+
+/** Build a `?limit=&offset=` suffix, omitting unset values. */
+function pageQuery(opts: { limit?: number; offset?: number }): string {
+  const params = new URLSearchParams();
+  if (opts.limit != null) params.set("limit", String(opts.limit));
+  if (opts.offset != null) params.set("offset", String(opts.offset));
+  const qs = params.toString();
+  return qs ? `?${qs}` : "";
+}
+
+/** GET /artists?limit=&offset= */
+export function listArtists(
+  opts: { limit?: number; offset?: number } = {},
+): Promise<ArtistPage> {
+  return get<ArtistPage>(`/artists${pageQuery(opts)}`);
+}
+
+/** GET /artists/{artistId}/artworks?limit=&offset= */
+export function listArtistArtworks(
+  artistId: string,
+  opts: { limit?: number; offset?: number } = {},
+): Promise<ArtistArtworkPage> {
+  return get<ArtistArtworkPage>(
+    `/artists/${artistId}/artworks${pageQuery(opts)}`,
+  );
+}
+
+/** GET /collections/{collectionId}/artists?limit=&offset= */
+export function listCollectionArtists(
+  collectionId: string,
+  opts: { limit?: number; offset?: number } = {},
+): Promise<CollectionArtistPage> {
+  return get<CollectionArtistPage>(
+    `/collections/${collectionId}/artists${pageQuery(opts)}`,
+  );
 }

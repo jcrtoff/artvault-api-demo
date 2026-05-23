@@ -37,3 +37,11 @@ tickets in Plane; the fix lands in the **artvault** repo (often in
 - **What hurt / what we expected:** Docs say "full list of attached documents" and the Image/URL section references `documents[].url` / `documents[].thumbnail_url`, but the object's full shape (filename? mime type? group it belongs to?) is never given. Had to keep our TS type loose (`[k: string]: unknown`). Need a documented shape.
 - **AV ticket:** AV-224
 - **Status:** filed
+
+### F-03 — no artist concept: can't build an artists page (list, primary image, cross-collection works)
+- **Severity:** blocker
+- **Where:** API surface as a whole (no `/artists*`); relates to `field_values`/`field-groups` (F-01)
+- **What we tried:** Build a page listing all artists, each with a primary image, linking to that artist's artworks across all of the user's collections.
+- **What hurt / what we expected:** Artists aren't first-class — they only appear as a free-text field value (`artist_name` per `__base__`, but the docs example uses `creator` — see F-01). There is no artist list endpoint, no cross-collection artwork query (everything is scoped to one collection), and no "primary image" concept. Building the feature on documented endpoints would mean crawling every collection + page and grouping on unstable free-text names — disallowed by the charter. Need artist as a first-class resource. Proposed contract: `GET /artists` (with `primary_image_url`/`primary_thumbnail_url` + embedded `collections[]`), `GET /artists/{id}/artworks` (items carry `collection_id`/`collection_name`), and `GET /collections/{id}/artists`. Artist `id` should be backend-assigned/stable; "primary image" defaults to the artist's first artwork thumbnail.
+- **AV ticket:** AV-226
+- **Status:** fixed — deployed; production docs now expose `GET /artists`, `GET /artists/{id}/artworks` (items carry `collection_id`/`collection_name`), and `GET /collections/{id}/artists`, with artist `primary_image_url`/`primary_thumbnail_url` and a stable backend-assigned `id`. Consumed by the demo's `/artists`, `/artists/[id]`, and the collection page's artists strip. (AV-223 landed alongside it: the artist-artworks example now uses `artist_name`, not `creator`.)

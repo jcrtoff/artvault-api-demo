@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
   // S3 host allow-listed up front, and next/image would force that config.
   // Keeping it dumb here is part of the dogfood — see FINDINGS.md.
   reactStrictMode: true,
+
+  // Emit a self-contained server bundle (.next/standalone) so the Docker image
+  // runs on a minimal node base without shipping node_modules. See Dockerfile.
+  output: "standalone",
 };
 
 export default nextConfig;

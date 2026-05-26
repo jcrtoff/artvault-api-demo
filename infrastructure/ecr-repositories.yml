@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'ECR repository for the ArtVault API demo (dogfood consumer)'
+
+# Separate stack from artvault-ecr on purpose: this repo is independent from
+# the main artvault repo and is never part of its production pipeline
+# (see CLAUDE.md charter). Deploy with:
+#   aws cloudformation deploy --profile toffsystems_ecr \
+#     --stack-name artvault-api-demo-ecr \
+#     --template-file infrastructure/ecr-repositories.yml
+
+Resources:
+  DemoRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: artvault-api-demo
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {
+            "rules": [{
+              "rulePriority": 1,
+              "description": "Keep last 10 images",
+              "selection": {
+                "tagStatus": "any",
+                "countType": "imageCountMoreThan",
+                "countNumber": 10
+              },
+              "action": { "type": "expire" }
+            }]
+          }
+      Tags:
+        - Key: Project
+          Value: ArtVault
+        - Key: Component
+          Value: api-demo
+
+Outputs:
+  DemoRepositoryUri:
+    Value: !GetAtt DemoRepository.RepositoryUri
+    Description: API demo ECR repository URI
+    Export:
+      Name: ArtVaultApiDemoECRUri
